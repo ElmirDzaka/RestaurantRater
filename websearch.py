@@ -4,29 +4,45 @@ import urllib
 import pandas as pd
 from requests_html import HTML
 from requests_html import HTMLSession
+from geopy.geocoders import Nominatim
+
+
+def get_location(address):
+    geolocator = Nominatim(user_agent="RestaurantRater")
+    geocoded_address = geolocator.geocode(address)
+    return f'{geocoded_address.latitude}, {geocoded_address.longitude}'
+
+def get_restaurant_results(location, keyword, API_KEY):
+    url = f'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location={location}&keyword={keyword}&radius=5000&type=restaurant&key={API_KEY}'
+    response = requests.get(url)
+    data = response.json()
+
+    if data['status'] == 'OK':
+        results = data['results']
+        for result in results:
+            # Extract relevant information from the result
+            name = result['name']
+            address = result['vicinity']
+            rating = result['rating'] if 'rating' in result else 'N/A'
+
+            print(f'Name: {name}')
+            print(f'Address: {address}')
+            print(f'Rating: {rating}')
+            print('---')
+    else:
+        print('Error:', data['status'])
 
 def main(argv):
-    #hard code url for testing for now 
-    #mexican testaurants salt lake city
-    url = "https://www.google.com/search?q=mexican+restaurants+salt+lake+city&biw=1920&bih=937&tbm=lcl&sxsrf=AB5stBiGgszI3DR2usnoki1IvhrmZb5a5Q%3A1688619334295&ei=RkmmZMrUEZXNkPIP4oyM6Aw&oq=mexican+restaurants+salt+lake+&gs_lcp=Cg1nd3Mtd2l6LWxvY2FsEAMYADIFCAAQgAQyBQgAEIAEMgUIABCABDIGCAAQFhAeMgYIABAWEB4yBggAEBYQHjIGCAAQFhAeMgYIABAWEB4yBggAEBYQHjIGCAAQFhAeOgQIIxAnOgsIABCABBCxAxDJAzoICAAQgAQQkgM6CwgAEIoFEJIDEIsDUKkGWIwOYKQUaABwAHgAgAFUiAHGBpIBAjEymAEAoAEBuAECwAEB&sclient=gws-wiz-local#rlfi=hd:;si:;mv:[[40.7954642,-111.8854613],[40.7217882,-111.9439294]];tbs:lrf:!1m4!1u3!2m2!3m1!1e1!1m4!1u2!2m2!2m1!1e1!1m4!1u1!2m2!1m1!1e1!1m4!1u1!2m2!1m1!1e2!1m4!1u22!2m2!21m1!1e1!2m1!1e2!2m1!1e1!2m1!1e3!3sIAE,lf:1,lf_ui:9"
-    get_results(url)
+    #encode API key later
+    API_KEY = "AIzaSyBGRwQhPbp_p8bZK0U7RvOK-_l4sVZmze8"
 
-def get_results(url):
-    """Return the source code for the provided URL. 
-    Args: 
-        url (string): URL of the page to scrape.
+    #location and restaurant type will be user-entered data
+    address = "Salt Lake City"
+    keyword = "Italian"
+    location = get_location(address)
+    get_restaurant_results(location, keyword, API_KEY)
 
-    Returns:
-        response (object): HTTP response object from requests_html. 
-    """
 
-    try:
-        session = HTMLSession()
-        response = session.get(url)
-        return response
-
-    except requests.exceptions.RequestException as e:
-        print(e)
 
 if __name__ == "__main__":
     main(sys.argv[1:]) 
